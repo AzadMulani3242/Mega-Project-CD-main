@@ -95,7 +95,7 @@ spec:
           periodSeconds: 10
         readinessProbe:
           exec:
-            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+            command: ["mysqladmin", "ping", "-h", "mysql-service"]
           initialDelaySeconds: 30
           periodSeconds: 10
       volumes:
@@ -180,7 +180,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
+  - port: 8080
     targetPort: 8080
   selector:
     app: bankapp
