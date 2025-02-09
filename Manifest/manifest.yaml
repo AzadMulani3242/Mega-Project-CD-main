@@ -18,33 +18,25 @@ metadata:
 data:
   MYSQL_DATABASE: "bankappdb"
 ---
-# Storage Class for EBS
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: ebs-sc
-provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
-  fsType: ext4
-reclaimPolicy: Retain
-volumeBindingMode: WaitForFirstConsumer
----
-# Persistent Volume Claim for MySQL
+# Persistent Volume using hostPath (Temporary Fix)
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: PersistentVolume
 metadata:
-  name: mysql-pvc
+  name: mysql-pv
   namespace: webapps
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: ebs-sc
-  resources:
-    requests:
-      storage: 5Gi
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /mnt/data/mysql  # Ensure this path exists on the worker node
+    type: DirectoryOrCreate
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  volumeMode: Filesystem
 ---
-# MySQL Deployment
+# MySQL Deployment (Using hostPath instead of PVC)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -95,13 +87,14 @@ spec:
           periodSeconds: 10
         readinessProbe:
           exec:
-            command: ["mysqladmin", "ping", "-h", "mysql-service"]
+            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
           initialDelaySeconds: 30
           periodSeconds: 10
       volumes:
       - name: mysql-data
-        persistentVolumeClaim:
-          claimName: mysql-pvc
+        hostPath:
+          path: /mnt/data/mysql  # Ensure this directory exists
+          type: DirectoryOrCreate
 ---
 # MySQL Service
 apiVersion: v1
@@ -180,7 +173,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 8080
+  - port: 80
     targetPort: 8080
   selector:
     app: bankapp
