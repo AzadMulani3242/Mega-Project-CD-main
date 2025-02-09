@@ -134,7 +134,7 @@ spec:
     spec:
       containers:
       - name: bankapp
-        image: azad3242/bankapp:v20
+        image: azad3242/bankapp:v8
         resources:
           requests:
             memory: "256Mi"
